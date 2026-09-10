@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cohortes UGR</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+
+  :root {
+    color-scheme: light;
+    --bg:            #f5f6f1;
+    --surface:       #ffffff;
+    --surface-2:     #eef0ea;
+    --ink:           #1b2420;
+    --ink-secondary: #5a6259;
+    --ink-muted:     #8a9186;
+    --hairline:      #dcded5;
+    --border:        rgba(27,36,32,0.12);
+
+    --accent:        #1f6f6b;
+    --accent-ink:    #ffffff;
+    --accent-soft:   #dcece9;
+
+    /* carrera identity, reused across every chart — son 4 carreras, no 3 */
+    --c-lcd:        #2a78d6;
+    --c-tucd-vieja: #9a9a94;
+    --c-tucd-nueva: #eb6834;
+    --c-tupr:       #1baf7a;
+
+    /* estado (status) */
+    --st-completo:   #0ca30c;
+    --st-pendiente:  #c98500;
+    --st-vencido:    #d03b3b;
+
+    --shadow: 0 1px 2px rgba(27,36,32,0.06), 0 8px 24px -12px rgba(27,36,32,0.12);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --bg:            #12140f;
+      --surface:       #1a1d17;
+      --surface-2:     #21241d;
+      --ink:           #f3f4ef;
+      --ink-secondary: #c1c6ba;
+      --ink-muted:     #868c7f;
+      --hairline:      #2d3128;
+      --border:        rgba(255,255,255,0.10);
+
+      --accent:        #4fb3ac;
+      --accent-ink:    #08221f;
+      --accent-soft:   #1f3532;
+
+      --c-lcd:        #3987e5;
+      --c-tucd-vieja: #7d8178;
+      --c-tucd-nueva: #f08350;
+      --c-tupr:       #22c78a;
+
+      --st-completo:  #17c31c;
+      --st-pendiente: #e0a12e;
+      --st-vencido:   #e66767;
+
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -12px rgba(0,0,0,0.5);
+    }
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'IBM Plex Sans', system-ui, -apple-system, "Segoe UI", sans-serif;
+    padding: clamp(20px, 5vw, 56px) 20px 64px;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; display: flex; flex-direction: column; gap: 40px; }
+
+  h1, h2, h3 { font-family: 'Fraunces', Georgia, serif; font-weight: 600; text-wrap: balance; margin: 0; }
+  h1 { font-size: clamp(28px, 4vw, 40px); letter-spacing: -0.01em; }
+  h2 { font-size: clamp(20px, 2.6vw, 25px); }
+  p { margin: 0; line-height: 1.55; }
+  .muted { color: var(--ink-secondary); }
+  .tiny { font-size: 12.5px; color: var(--ink-muted); }
+
+  /* ---------- header ---------- */
+  header { display: flex; flex-direction: column; gap: 10px; }
+  .eyebrow {
+    font-size: 12.5px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--accent);
+  }
+  .lede { max-width: 62ch; font-size: 15.5px; }
+  .meta-row { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 4px; }
+  .meta-row span { font-size: 12.5px; color: var(--ink-muted); }
+
+  /* ---------- carrera legend, reused everywhere ---------- */
+  .carrera-legend { display: flex; flex-wrap: wrap; gap: 14px 22px; }
+  .carrera-legend .item { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--ink-secondary); }
+  .swatch { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+
+  /* ---------- stat tiles ---------- */
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1px; background: var(--hairline); border: 1px solid var(--hairline); border-radius: 14px; overflow: hidden; }
+  .stat { background: var(--surface); padding: 18px 18px 16px; display: flex; flex-direction: column; gap: 4px; }
+  .stat .value { font-family: 'Fraunces', Georgia, serif; font-size: 30px; font-weight: 600; line-height: 1; font-variant-numeric: proportional-nums; }
+  .stat .label { font-size: 12.5px; color: var(--ink-secondary); }
+
+  /* ---------- card / section ---------- */
+  section { display: flex; flex-direction: column; gap: 16px; }
+  .section-head { display: flex; flex-direction: column; gap: 6px; }
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+    padding: clamp(18px, 3vw, 28px); box-shadow: var(--shadow);
+    display: flex; flex-direction: column; gap: 20px;
+  }
+
+  /* ---------- grouped bar chart (avance, edad) ---------- */
+  .chart-group { display: flex; flex-direction: column; gap: 22px; }
+  .chart-row { display: flex; flex-direction: column; gap: 6px; }
+  .chart-row .row-label { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; }
+  .chart-row .row-label .n { color: var(--ink-muted); font-size: 12px; }
+  .stack { display: flex; height: 24px; border-radius: 6px; overflow: hidden; background: var(--surface-2); }
+  .stack .seg { display: flex; align-items: center; justify-content: center; min-width: 0; }
+  .stack .seg + .seg { margin-left: 2px; }
+  .stack .seg span { font-size: 11.5px; font-weight: 600; color: #fff; white-space: nowrap; padding: 0 6px; text-shadow: 0 1px 1px rgba(0,0,0,0.15); }
+  .stack .seg.pequeno span { display: none; }
+
+  /* ---------- avance: un bloque por carrera, una fila por año de ingreso ---------- */
+  .avance-carrera { display: flex; flex-direction: column; gap: 10px; padding-bottom: 18px; border-bottom: 1px solid var(--hairline); }
+  .avance-carrera:last-child { padding-bottom: 0; border-bottom: none; }
+  .avance-carrera-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .avance-carrera-head .carrera-name { font-size: 14px; font-weight: 600; }
+  .avance-carrera-head .n { margin-left: auto; font-size: 12px; color: var(--ink-muted); }
+  .avance-carrera .chart-row .row-label { font-size: 12.5px; color: var(--ink-secondary); }
+
+  .legend-row { display: flex; flex-wrap: wrap; gap: 16px 22px; padding-top: 4px; border-top: 1px solid var(--hairline); }
+  .legend-row .item { display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--ink-secondary); }
+
+  /* ---------- horizontal ranking bars (geografia) ---------- */
+  .rank-list { display: flex; flex-direction: column; gap: 10px; }
+  .rank-row { display: grid; grid-template-columns: 110px 1fr 40px; align-items: center; gap: 10px; }
+  .rank-row .name { font-size: 13px; color: var(--ink-secondary); }
+  .rank-track { height: 14px; background: var(--surface-2); border-radius: 4px; overflow: hidden; }
+  .rank-fill { height: 100%; background: var(--accent); border-radius: 4px; }
+  .rank-row .count { font-size: 12.5px; text-align: right; font-variant-numeric: tabular-nums; color: var(--ink-secondary); }
+
+  /* ---------- age grouped bars ---------- */
+  .age-chart { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; align-items: end; height: 190px; }
+  .age-col { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 6px; }
+  .age-bars { display: flex; align-items: flex-end; gap: 3px; height: 100%; }
+  .age-bar { width: 11px; border-radius: 3px 3px 0 0; position: relative; }
+  .age-bucket-label { font-size: 11.5px; color: var(--ink-muted); }
+
+  /* ---------- two-col layout ---------- */
+  .two-col { display: grid; grid-template-columns: 1.15fr 1fr; gap: 20px; }
+  @media (max-width: 720px) { .two-col { grid-template-columns: 1fr; } }
+
+  .callout {
+    background: var(--surface-2); border-radius: 12px; padding: 14px 16px; font-size: 13px; color: var(--ink-secondary);
+    border-left: 3px solid var(--accent);
+  }
+
+  .conv-stats { display: flex; gap: 24px; flex-wrap: wrap; }
+  .conv-stats .item { display: flex; flex-direction: column; gap: 2px; }
+  .conv-stats .item .value { font-family: 'Fraunces', Georgia, serif; font-size: 26px; font-weight: 600; }
+  .conv-stats .item .label { font-size: 12.5px; color: var(--ink-secondary); max-width: 16ch; }
+
+  .dot-strip { display: flex; align-items: center; gap: 3px; flex-wrap: wrap; padding-top: 4px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+
+  footer { border-top: 1px solid var(--hairline); padding-top: 20px; display: flex; flex-direction: column; gap: 8px; }
+  footer p { font-size: 12.5px; color: var(--ink-muted); max-width: 74ch; line-height: 1.6; }
+  code { background: var(--surface-2); padding: 1px 6px; border-radius: 4px; font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <span class="eyebrow">Universidad del Gran Rosario · Admisiones</span>
+    <h1>Cohortes UGR</h1>
+    <p class="lede muted">Panorama de los alumnos de la Licenciatura en Ciencia de Datos (Ciclo de Complementación) y las Tecnicaturas en Ciencia de Datos e IA y en Programación: avance académico, origen geográfico, edad al ingreso y pasaje de Tecnicatura a Licenciatura.</p>
+    <div class="meta-row">
+      <span>Corte: 9 de septiembre de 2026</span>
+      <span>1016 alumnos · 1041 inscripciones · 11 cohortes (2023–2026)</span>
+      <span>Ciudad y edad son <strong>estimaciones</strong> — ver metodología al pie</span>
+    </div>
+    <div class="carrera-legend" style="margin-top:8px;">
+      <span class="item"><span class="swatch" style="background:var(--c-lcd)"></span>Licenciatura en Ciencia de Datos</span>
+      <span class="item"><span class="swatch" style="background:var(--c-tucd-vieja)"></span>Tec. Ciencia de Datos (ya no se dicta)</span>
+      <span class="item"><span class="swatch" style="background:var(--c-tucd-nueva)"></span>Tec. Ciencia de Datos e IA</span>
+      <span class="item"><span class="swatch" style="background:var(--c-tupr)"></span>Tec. Programación</span>
+    </div>
+  </header>
+
+  <div class="stat-grid">
+    <div class="stat"><span class="value">1016</span><span class="label">alumnos únicos</span></div>
+    <div class="stat"><span class="value">1041</span><span class="label">inscripciones totales</span></div>
+    <div class="stat"><span class="value">109</span><span class="label">completaron el 100% de actividades</span></div>
+    <div class="stat"><span class="value">76%</span><span class="label">con ciudad aproximada identificada</span></div>
+    <div class="stat"><span class="value">4,6%</span><span class="label">de la Tecnicatura pasó a la Licenciatura</span></div>
+  </div>
+
+  <!-- ============ 1. SEGUIMIENTO DE AVANCE ============ -->
+  <section>
+    <div class="section-head">
+      <h2>Seguimiento de avance</h2>
+      <p class="muted">Por carrera y año de ingreso: cuántos ya completaron el 100% de las actividades y, de los que no, cuántos ya pasaron la fecha estimada de egreso (fecha de ingreso + duración nominal de la carrera) sin completar. No asume un ritmo parejo de avance por cuatrimestre — es un conteo de hechos, no una proyección.</p>
+    </div>
+    <div class="card">
+      <div class="chart-group">
+
+        <div class="avance-carrera">
+          <div class="avance-carrera-head">
+            <span class="swatch" style="background:var(--c-lcd)"></span>
+            <span class="carrera-name">Licenciatura en Ciencia de Datos</span>
+            <span class="n">n = 625 · 14% completó en total</span>
+          </div>
+          <div class="chart-row">
+            <div class="row-label"><span>Ingreso 2023</span><span class="n">n = 55</span></div>
+            <div class="stack">
+              <div class="seg" style="width:54.5%; background:var(--st-completo)"><span>55% completó</span></div>
+              <div class="seg" style="width:45.5%; background:var(--st-vencido)"><span>45% plazo vencido</span></div>
+            </div>
+          </div>
+          <div class="chart-row">
+            <div class="row-label"><span>Ingreso 2024</span><span class="n">n = 111</span></div>
+            <div class="stack">
+              <div class="seg" style="width:52.3%; background:var(--st-completo)"><span>52% completó</span></div>
+              <div class="seg" style="width:47.7%; background:var(--st-vencido)"><span>48% plazo vencido</span></div>
+            </div>
+          </div>
+          <div class="chart-row">
+            <div class="row-label"><span>Ingreso 2025</span><span class="n">n = 163</span></div>
+            <div class="stack">
+              <div class="seg" style="width:49.7%; background:var(--st-pendiente)"><span>50% en plazo</span></div>
+              <div class="seg" style="width:50.3%; background:var(--st-vencido)"><span>50% plazo vencido</span></div>
+            </div>
+          </div>
+          <div class="chart-row">
+            <div class="row-label"><span>Ingreso 2026</span><span class="n">n = 296</span></div>
+            <div class="stack">
+              <div class="seg" style="width:100%; background:var(--st-pendiente)"><span>100% en plazo · recién arranca</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="avance-carrera">
+          <div class="avance-carrera-head">
+            <span class="swatch" style="background:var(--c-tucd-vieja)"></span>
+            <span class="carrera-name">Tec. Ciencia de Datos <em class="tiny" style="font-style:normal;">(ya no se dicta)</em></span>
+            <span class="n">n = 163 · 13% completó en total</span>
+          </div>
+          <div class="chart-row">
+            <div class="row-label"><span>Ingreso 2023</span><span class="n">n = 39</span></div>
+            <div class="stack">
+              <div class="seg" style="width:23.1%; background:var(--st-completo)"><span>23% completó</span></div>
+              <div class="seg" style="width:76.9%; background:var(--st-vencido)"><span>77% plazo vencido</span></div>
+            </div>
+          </div>
+          <div class="chart-row">
+            <div class="row-label"><span>Ingreso 2024</span><span class="n">n = 78</span></div>
+            <div class="stack">
+              <div class="seg" style="width:15.4%; background:var(--st-completo)"><span>15% completó</span></div>
+              <div class="seg pequeno" style="width:19.2%; background:var(--st-pendiente)"><span>19% en plazo</span></div>
+              <div class="seg" style="width:65.4%; background:var(--st-vencido)"><span>65% plazo vencido</span></div>
+            </div>
+          </div>
+          <div class="chart-row">
+            <div class="row-label"><span>Ingreso 2025</span><span class="n">n = 46</span></div>
+            <div class="stack">
+              <div class="seg" style="width:100%; background:var(--st-pendiente)"><span>100% en plazo · recién arranca</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="avance-carrera">
+          <div class="avance-carrera-head">
+            <span class="swatch" style="background:var(--c-tucd-nueva)"></span>
+            <span class="carrera-name">Tec. Ciencia de Datos e IA</span>
+            <span class="n">n = 181 · cohorte única, 2026</span>
+          </div>
+          <div class="chart-row">
+            <div class="row-label"><span>Ingreso 2026</span><span class="n">n = 181</span></div>
+            <div class="stack">
+              <div class="seg" style="width:100%; background:var(--st-pendiente)"><span>100% en plazo · recién arranca</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="avance-carrera">
+          <div class="avance-carrera-head">
+            <span class="swatch" style="background:var(--c-tupr)"></span>
+            <span class="carrera-name">Tec. Programación</span>
+            <span class="n">n = 72 · cohorte única, 2026</span>
+          </div>
+          <div class="chart-row">
+            <div class="row-label"><span>Ingreso 2026</span><span class="n">n = 72</span></div>
+            <div class="stack">
+              <div class="seg" style="width:100%; background:var(--st-pendiente)"><span>100% en plazo · recién arranca</span></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="legend-row">
+        <span class="item"><span class="swatch" style="background:var(--st-completo)"></span>Completó el 100% de actividades</span>
+        <span class="item"><span class="swatch" style="background:var(--st-pendiente)"></span>Pendiente, dentro del plazo estimado</span>
+        <span class="item"><span class="swatch" style="background:var(--st-vencido)"></span>Pendiente, pasó la fecha estimada de egreso</span>
+      </div>
+
+      <div class="callout">
+        Mirado por año de ingreso (no por promedio de toda la carrera) se ve mejor la tendencia: en la Licenciatura, las cohortes 2023 y 2024 —ya con tiempo cumplido— tienen alrededor de la mitad completada y la otra mitad con el plazo vencido; 2025 está a mitad de camino entre "en plazo" y "vencido"; 2026 recién arranca. La Tecnicatura <strong>vieja</strong> (discontinuada) empeora año a año: de 23% de plazo vencido en la cohorte 2023 pasa a 65% en la 2024 — coherente con ser un programa que ya no se dicta y donde cada vez es menos probable que alguien lo retome. La <strong>nueva</strong> (con IA) y Tec. Programación, ambas cohorte 2026, todavía no tienen ni completados ni plazos vencidos: es demasiado pronto para ese dato.
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 2. DISTRIBUCION GEOGRAFICA ============ -->
+  <section>
+    <div class="section-head">
+      <h2>Distribución geográfica</h2>
+      <p class="muted">Provincia aproximada según el código de área telefónico (no disponible para el 24% de los alumnos).</p>
+    </div>
+    <div class="card two-col">
+      <div class="rank-list">
+        <div class="rank-row"><span class="name">Buenos Aires</span><div class="rank-track"><div class="rank-fill" style="width:100%"></div></div><span class="count">267</span></div>
+        <div class="rank-row"><span class="name">Santa Fe</span><div class="rank-track"><div class="rank-fill" style="width:81%"></div></div><span class="count">217</span></div>
+        <div class="rank-row"><span class="name">Córdoba</span><div class="rank-track"><div class="rank-fill" style="width:21%"></div></div><span class="count">55</span></div>
+        <div class="rank-row"><span class="name">Salta</span><div class="rank-track"><div class="rank-fill" style="width:12%"></div></div><span class="count">32</span></div>
+        <div class="rank-row"><span class="name">Neuquén</span><div class="rank-track"><div class="rank-fill" style="width:9%"></div></div><span class="count">25</span></div>
+        <div class="rank-row"><span class="name">Mendoza</span><div class="rank-track"><div class="rank-fill" style="width:8%"></div></div><span class="count">21</span></div>
+        <div class="rank-row"><span class="name">Tucumán</span><div class="rank-track"><div class="rank-fill" style="width:7%"></div></div><span class="count">20</span></div>
+        <div class="rank-row"><span class="name">Entre Ríos</span><div class="rank-track"><div class="rank-fill" style="width:7%"></div></div><span class="count">20</span></div>
+        <div class="rank-row"><span class="name">Jujuy</span><div class="rank-track"><div class="rank-fill" style="width:7%"></div></div><span class="count">19</span></div>
+        <div class="rank-row"><span class="name">Formosa</span><div class="rank-track"><div class="rank-fill" style="width:7%"></div></div><span class="count">18</span></div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:14px;">
+        <div class="callout">
+          <strong>Distancia (n=770 con ubicación):</strong> Buenos Aires 274 · Santa Fe 203 · Córdoba 55 — alcance realmente federal.
+        </div>
+        <div class="callout">
+          <strong>Presencial (n=23 con ubicación):</strong> Santa Fe 22 · Buenos Aires 1 — casi todo Rosario/zona, como se espera de una cursada presencial. El caso de Buenos Aires vale la pena mirarlo 1 a 1.
+        </div>
+        <p class="tiny">240 alumnos (24%) quedaron sin provincia asignada: son ~110 códigos de área distintos que aparecen 1 a 3 veces cada uno (localidades chicas) más algunos números con errores de carga.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 3. PERFIL ETARIO ============ -->
+  <section>
+    <div class="section-head">
+      <h2>Perfil etario al ingreso</h2>
+      <p class="muted">Edad aproximada al momento de inscribirse (no la edad actual), por carrera.</p>
+    </div>
+    <div class="card">
+      <div class="conv-stats" style="margin-bottom:4px;">
+        <div class="item"><span class="value" style="color:var(--c-lcd)">29,2</span><span class="label">años prom. · Licenciatura</span></div>
+        <div class="item"><span class="value" style="color:var(--c-tucd-vieja)">27,6</span><span class="label">años prom. · Tec. C. Datos (vieja)</span></div>
+        <div class="item"><span class="value" style="color:var(--c-tucd-nueva)">26,4</span><span class="label">años prom. · Tec. C. Datos e IA</span></div>
+        <div class="item"><span class="value" style="color:var(--c-tupr)">24,1</span><span class="label">años prom. · Tec. Programación</span></div>
+      </div>
+
+      <div class="age-chart">
+        <div class="age-col">
+          <div class="age-bars">
+            <div class="age-bar" style="height:34%; background:var(--c-lcd)"></div>
+            <div class="age-bar" style="height:32%; background:var(--c-tucd-vieja)"></div>
+            <div class="age-bar" style="height:48%; background:var(--c-tucd-nueva)"></div>
+            <div class="age-bar" style="height:64%; background:var(--c-tupr)"></div>
+          </div>
+          <span class="age-bucket-label">18–22</span>
+        </div>
+        <div class="age-col">
+          <div class="age-bars">
+            <div class="age-bar" style="height:5%; background:var(--c-lcd)"></div>
+            <div class="age-bar" style="height:22%; background:var(--c-tucd-vieja)"></div>
+            <div class="age-bar" style="height:0%; background:var(--c-tucd-nueva)"></div>
+            <div class="age-bar" style="height:0%; background:var(--c-tupr)"></div>
+          </div>
+          <span class="age-bucket-label">23–27</span>
+        </div>
+        <div class="age-col">
+          <div class="age-bars">
+            <div class="age-bar" style="height:32%; background:var(--c-lcd)"></div>
+            <div class="age-bar" style="height:21%; background:var(--c-tucd-vieja)"></div>
+            <div class="age-bar" style="height:42%; background:var(--c-tucd-nueva)"></div>
+            <div class="age-bar" style="height:29%; background:var(--c-tupr)"></div>
+          </div>
+          <span class="age-bucket-label">28–35</span>
+        </div>
+        <div class="age-col">
+          <div class="age-bars">
+            <div class="age-bar" style="height:14%; background:var(--c-lcd)"></div>
+            <div class="age-bar" style="height:7%; background:var(--c-tucd-vieja)"></div>
+            <div class="age-bar" style="height:4%; background:var(--c-tucd-nueva)"></div>
+            <div class="age-bar" style="height:6%; background:var(--c-tupr)"></div>
+          </div>
+          <span class="age-bucket-label">36–45</span>
+        </div>
+        <div class="age-col">
+          <div class="age-bars">
+            <div class="age-bar" style="height:7%; background:var(--c-lcd)"></div>
+            <div class="age-bar" style="height:8%; background:var(--c-tucd-vieja)"></div>
+            <div class="age-bar" style="height:6%; background:var(--c-tucd-nueva)"></div>
+            <div class="age-bar" style="height:1%; background:var(--c-tupr)"></div>
+          </div>
+          <span class="age-bucket-label">46+</span>
+        </div>
+      </div>
+
+      <div class="callout">
+        A menor duración y más nueva la propuesta, más joven el ingresante: Tec. Programación (la más nueva) concentra 64% entre 18 y 22 años, contra 34% en la Licenciatura — coherente con que esta última exige tener ya un título previo. Separadas, las dos Tecnicaturas de Ciencia de Datos también difieren: la nueva (con IA) es algo más joven en promedio que la vieja.
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 4. CONVERSION TEC -> LIC ============ -->
+  <section>
+    <div class="section-head">
+      <h2>De Tecnicatura a Licenciatura</h2>
+      <p class="muted">Alumnos que cursaron alguna Tecnicatura y luego se inscribieron en el Ciclo de Complementación Curricular.</p>
+    </div>
+    <div class="card">
+      <div class="conv-stats">
+        <div class="item"><span class="value">410</span><span class="label">cursaron alguna vez una Tecnicatura</span></div>
+        <div class="item"><span class="value">19</span><span class="label">de esos pasaron al Ciclo de Licenciatura</span></div>
+        <div class="item"><span class="value">4,6%</span><span class="label">tasa de conversión Tec. → Ciclo</span></div>
+        <div class="item"><span class="value">31</span><span class="label">meses promedio entre una y otra</span></div>
+      </div>
+      <div>
+        <p class="tiny" style="margin-bottom:6px;">Distribución de los 19 casos, en meses entre el ingreso a la Tecnicatura y el ingreso al Ciclo:</p>
+        <div class="dot-strip">
+          <div class="dot" style="background:var(--c-tucd-nueva)"></div>
+          <span class="tiny" style="margin-right:8px;">0m ×1</span>
+          <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+          <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+          <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+          <span class="tiny" style="margin:0 8px;">31m ×15</span>
+          <div class="dot" style="background:var(--c-tucd-vieja)"></div>
+          <span class="tiny" style="margin-right:8px;">38m ×1</span>
+          <div class="dot" style="background:var(--st-vencido)"></div><div class="dot" style="background:var(--st-vencido)"></div>
+          <span class="tiny">43m ×2</span>
+        </div>
+      </div>
+      <div class="callout">
+        18 de los 19 vienen de la Tecnicatura <strong>vieja</strong> y se concentran fuertemente en ~31 meses (2,5 años) — el tiempo justo de sus 5 cuatrimestres. El caso restante (0 meses) es un alumno que se inscribió el mismo año a la Tecnicatura <strong>nueva</strong> (con IA, 2026) y a la Licenciatura — vale la pena revisarlo puntualmente, no encaja con el patrón de "primero termina la Tecnicatura, después el Ciclo". Con solo 19 casos sobre 410 que cursaron alguna Tecnicatura, es una tasa de conversión baja: puede valer la pena entender qué pasa con el resto.
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p><strong>Metodología y alcance:</strong> datos de inscripción cargados por UGR en Excel (2023–2026), consolidados en una base MySQL (<code>ugr_ingresos</code>) con tablas <code>alumnos</code>, <code>cohortes</code> e <code>inscripciones</code>. La <strong>ciudad/provincia</strong> se estima por el código de área del teléfono cargado (no siempre confiable: 24% de los alumnos no pudo determinarse). El <strong>año de nacimiento</strong> se estima por rangos de numeración del DNI, de circulación pública en Argentina — no es un dato oficial y puede tener varios años de margen de error. La <strong>fecha estimada de egreso</strong> sale de sumarle a la fecha de ingreso la duración nominal de cada plan (3 a 5 cuatrimestres según carrera y año). Ninguna de estas tres estimaciones reemplaza el legajo académico real de cada alumno.</p>
+    <p>Este panel es una <strong>foto</strong> al 9 de septiembre de 2026. Las consultas SQL que generan estos números (como vistas, siempre actualizadas) están en <code>analisis_ugr_ingresos.sql</code>, en la misma carpeta que la base de datos.</p>
+  </footer>
+
+</div>
+</body>
+</html>
